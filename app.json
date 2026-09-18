@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Nocttua",
+    "slug": "nocttua-app",
+    "owner": "nocttua",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nocttua.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.nocttua.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/splash-icon.png",
+          "imageWidth": 120,
+          "backgroundColor": "#16162B"
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nocttua necesita acceso a tus fotos para guardar la foto de la receta del pediatra.",
+          "cameraPermission": "Nocttua necesita la cámara para fotografiar la receta del pediatra."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a6bfb2aa-19f4-496e-b1f1-72fd14236fa7"
+      }
+    }
+  }
+}

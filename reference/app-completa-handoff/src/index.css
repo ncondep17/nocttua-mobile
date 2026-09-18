@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: #E7E1D6;
+  color: #4A4459;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
+}
+* { box-sizing: border-box; }
+a { color: #6B5DD3; text-decoration: none; }
+a:hover { color: #16162B; }
+button { font: inherit; }
+/* El prototipo oculta las barras de scroll dentro del teléfono. */
+.no-bars::-webkit-scrollbar { width: 0; height: 0; }
