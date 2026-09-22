@@ -27,7 +27,7 @@ export function TextArea({ label, value, onChange, placeholder, rows = 3 }) {
 }
 
 /** TextField — una línea. Misma piel que TextArea. */
-export function TextField({ label, value, onChange, placeholder, mono = false }) {
+export function TextField({ label, value, onChange, placeholder, mono = false, secureTextEntry = false, autoCapitalize, keyboardType }) {
   return (
     <View style={{ gap: theme.space[4] }}>
       {label ? <Text style={{ fontFamily: theme.fontFamily.uiApp, fontSize: theme.fontSize.sm, color: theme.color.tintaTenue }}>{label}</Text> : null}
@@ -39,6 +39,9 @@ export function TextField({ label, value, onChange, placeholder, mono = false })
         returnKeyType="done"
         blurOnSubmit
         onSubmitEditing={() => Keyboard.dismiss()}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize={autoCapitalize}
+        keyboardType={keyboardType}
         style={[fieldBase, { fontFamily: mono ? theme.fontFamily.mono : theme.fontFamily.uiApp, letterSpacing: mono ? 1 : 0 }]}
       />
     </View>
