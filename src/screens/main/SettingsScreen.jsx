@@ -57,7 +57,7 @@ function GenderPicker({ value, onChange }) {
   );
 }
 
-export function SettingsScreen({ onClose, onOpenPaywall, onOpenSleepPlan }) {
+export function SettingsScreen({ onClose, onOpenSleepPlan }) {
   const [familyId, setFamilyId] = useState(null);
   const [babies, setBabies] = useState([]);
   const [edits, setEdits] = useState({});
@@ -354,13 +354,6 @@ export function SettingsScreen({ onClose, onOpenPaywall, onOpenSleepPlan }) {
         <Button variant="secondary" onPress={handleNotifications}>
           {permission === 'undetermined' ? 'Activar avisos' : 'Abrir Ajustes del sistema'}
         </Button>
-      </Card>
-
-      <Card title="Suscripción">
-        <Text style={{ fontFamily: theme.fontFamily.uiApp, fontSize: theme.fontSize.base, color: theme.color.tintaCuerpo }}>
-          Por ahora el registro y las analíticas son gratis para todas las cuentas — la compra dentro de la app todavía no está conectada.
-        </Text>
-        <Button variant="secondary" onPress={onOpenPaywall}>Ver planes mensual / anual</Button>
       </Card>
 
       <Button variant="danger" size="lg" full onPress={handleSignOut}>Cerrar sesión</Button>

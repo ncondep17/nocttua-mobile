@@ -92,7 +92,7 @@ function useAnim(open) {
   return anim;
 }
 
-/** Pantalla completa superpuesta (código de asesora, paywall). */
+/** Pantalla completa superpuesta (código de asesora, modo noche, etc). */
 export function FullScreenV2({ children }) {
   return <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#FBF7F0' }}>{children}</View>;
 }

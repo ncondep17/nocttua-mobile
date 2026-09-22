@@ -11,16 +11,8 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 import { observeDeliveredWindowAlerts } from './src/lib/windowAlerts';
 import { registerDoseNotificationCategory, observeDoseNotificationResponses } from './src/lib/doseAlerts';
-import { configurePurchases } from './src/lib/purchases';
 
 SplashScreen.preventAutoHideAsync();
-// A nivel de módulo a propósito: RootNavigator identifica al comprador
-// (identifyPurchaser) apenas hay sesión, y los efectos de un hijo corren
-// antes que los del padre — si esto se moviera a un useEffect de App, podría
-// dispararse después de que RootNavigator ya intentó identificar al
-// comprador. Ahora está protegido con try/catch adentro (ver purchases.js),
-// así que un fallo acá nunca vuelve a tumbar la app entera.
-configurePurchases();
 
 // El aviso de ventana (CONTRATO-AVISO-VENTANA.md) tiene que verse aunque la
 // app esté abierta, no solo cuando está en segundo plano.

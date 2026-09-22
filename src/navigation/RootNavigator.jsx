@@ -3,7 +3,6 @@ import { View, ActivityIndicator } from 'react-native';
 import { theme } from '@nocttua/theme/native';
 import { supabase } from '../lib/supabase';
 import { getMyFamilyId } from '../data/family';
-import { identifyPurchaser, forgetPurchaser } from '../lib/purchases';
 import { OnboardingStack } from './OnboardingStack';
 import { FamilyShell } from './FamilyShell';
 import { AccountTypeScreen } from '../screens/onboarding/09_AccountTypeScreen';
@@ -42,14 +41,6 @@ export function RootNavigator() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
-
-  // RevenueCat identifica las compras por usuario real, no por el id anónimo
-  // del dispositivo — así el acceso pagado persiste al reinstalar o cambiar
-  // de teléfono con la misma cuenta.
-  useEffect(() => {
-    if (session?.user?.id) identifyPurchaser(session.user.id);
-    else if (session === null) forgetPurchaser();
-  }, [session]);
 
   useEffect(() => {
     if (!session || postAuthStep !== null) return;

@@ -11,18 +11,16 @@ import { MedsSheet } from '../screens/main-v2/overlays/MedsSheet';
 import { GiveDoseSheet } from '../screens/main-v2/overlays/GiveDoseSheet';
 import { EditPrescriptionSheet } from '../screens/main-v2/overlays/EditPrescriptionSheet';
 import { EventDetailSheet } from '../screens/overlays/EventDetailSheet';
-import { PaywallScreen } from '../screens/overlays/PaywallScreen';
 import { SettingsScreen } from '../screens/main/SettingsScreen';
 import { SleepPlanScreen } from '../screens/main/SleepPlanScreen';
 import { NightModeScreen } from '../screens/main-v2/NightModeScreen';
 import { MorningScreen } from '../screens/main-v2/MorningScreen';
 import { TreatmentScreen } from '../screens/main-v2/TreatmentScreen';
 import { QuickActionsSheet } from '../screens/main-v2/overlays/QuickActionsSheet';
-import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, countSleepEvents, hasLinkedCoach, closeNight } from '../data/family';
+import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, closeNight } from '../data/family';
 import { getActiveEpisode, getPrescriptions, getDosesSince, startEpisode, endEpisode, upsertPrescription, deactivatePrescription, setPrescriptionInUse, logDose } from '../data/meds';
 import { addShiftNote } from '../data/shiftNotes';
 import { scheduleTodayDoseAlerts } from '../lib/scheduleTodayDoses';
-import { hasActiveEntitlement } from '../lib/purchases';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -36,7 +34,7 @@ export function FamilyShell() {
   const [sheet, setSheet] = useState(null); // 'sleep' | 'feed' | 'pump' | 'diaper' | 'event'
   const [logCtx, setLogCtx] = useState({ label: '', babyIndex: 0, session: 'nap', isWake: false });
   const [event, setEvent] = useState(null); // evento seleccionado (detalle o edición)
-  const [full, setFull] = useState(null); // 'paywall' | 'settings'
+  const [full, setFull] = useState(null); // 'settings'
   const [toast, setToast] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -106,7 +104,6 @@ export function FamilyShell() {
     try {
       const split = await splitSharedIfNeeded(event, payload);
       const sameRecord = !split && event && payload.babyId === event.baby_id;
-      const isNew = !split && !sameRecord;
       if (!split) {
         if (sameRecord) await updateEvent(event.id, payload);
         else await insertEvent(familyId, payload);
@@ -114,7 +111,6 @@ export function FamilyShell() {
       closeSheet();
       setRefreshKey((k) => k + 1);
       say(split || sameRecord ? 'Sueño actualizado' : 'Sueño anotado');
-      if (isNew) maybeOfferPaywall();
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -130,7 +126,6 @@ export function FamilyShell() {
       closeSheet();
       setRefreshKey((k) => k + 1);
       say('Sueño anotado para las dos');
-      maybeOfferPaywall();
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -150,15 +145,6 @@ export function FamilyShell() {
       say(closures.length > 1 ? 'Noche cerrada para las dos' : 'Despertar guardado');
     } catch (err) {
       say(err.message ?? String(err));
-    }
-  };
-
-  const maybeOfferPaywall = async () => {
-    try {
-      const [count, linked, entitled] = await Promise.all([countSleepEvents(familyId), hasLinkedCoach(familyId), hasActiveEntitlement()]);
-      if (count === 7 && !linked && !entitled) setFull('paywall');
-    } catch {
-      // El paywall es un extra, no bloquea el registro si esta comprobación falla.
     }
   };
 
@@ -428,12 +414,10 @@ export function FamilyShell() {
         onEnterNightMode={() => setFull('nightMode')}
       />
 
-      <PaywallScreen open={full === 'paywall'} onClose={() => setFull(null)} onSubscribe={() => say('¡Gracias por suscribirte!')} />
       {full === 'settings' ? (
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'white' }}>
           <SettingsScreen
             onClose={() => { setFull(null); loadBabies(familyId); setRefreshKey((k) => k + 1); }}
-            onOpenPaywall={() => setFull('paywall')}
             onOpenSleepPlan={() => setFull('sleepPlan')}
           />
         </View>

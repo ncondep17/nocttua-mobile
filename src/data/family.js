@@ -340,17 +340,6 @@ export async function deleteEvent(eventId) {
   if (error) throw error;
 }
 
-/** Cuántos sueños se registraron en total — dispara el paywall al 7º. */
-export async function countSleepEvents(familyId) {
-  const { count, error } = await supabase
-    .from('events')
-    .select('id', { count: 'exact', head: true })
-    .eq('family_id', familyId)
-    .eq('type', 'sleep');
-  if (error) throw error;
-  return count ?? 0;
-}
-
 /** Si ya hay una asesora vinculada, sus analíticas quedan incluidas sin costo. */
 export async function hasLinkedCoach(familyId) {
   const { data, error } = await supabase
