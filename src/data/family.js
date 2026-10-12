@@ -125,6 +125,20 @@ export async function getRecentEvents(familyId, { hours = 24, types } = {}) {
   return getEventsSince(familyId, since, types);
 }
 
+/** Noches abiertas (sin ended_at) de cualquier día, no solo hoy — para el aviso de "noche sin cerrar". Una fila por bebé como máximo (`baby_id` no es null en estas). */
+export async function getOpenNightEvents(familyId) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, baby_id, started_at, fell_asleep_at')
+    .eq('family_id', familyId)
+    .eq('type', 'sleep')
+    .eq('session', 'night')
+    .is('ended_at', null)
+    .not('baby_id', 'is', null);
+  if (error) throw error;
+  return data;
+}
+
 /** El sueño más reciente que haya en la base, sin importar cuánto hace — para el aviso de inactividad. null si nunca se registró ninguno. */
 export async function getLatestSleepEventAt(familyId) {
   const { data, error } = await supabase

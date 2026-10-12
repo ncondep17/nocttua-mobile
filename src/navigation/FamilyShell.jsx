@@ -23,6 +23,7 @@ import { addShiftNote } from '../data/shiftNotes';
 import { scheduleTodayDoseAlerts } from '../lib/scheduleTodayDoses';
 import { scheduleInactivityAlert } from '../lib/inactivityAlerts';
 import { scheduleIllnessCheckAlert, cancelIllnessCheckAlert } from '../lib/illnessCheckAlerts';
+import { refreshOpenNightAlerts } from '../lib/openNightAlerts';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -90,6 +91,7 @@ export function FamilyShell() {
       // de esperar a que se guarde un sueño nuevo.
       const lastSleepAt = await getLatestSleepEventAt(id);
       if (lastSleepAt) scheduleInactivityAlert(lastSleepAt.getTime()).catch(() => {});
+      refreshOpenNightAlerts(id, babiesData).catch(() => {});
     })();
   }, [loadMeds]);
 
@@ -128,6 +130,7 @@ export function FamilyShell() {
       setRefreshKey((k) => k + 1);
       say(split || sameRecord ? 'Sueño actualizado' : 'Sueño anotado');
       scheduleInactivityAlert(Date.now()).catch(() => {});
+      refreshOpenNightAlerts(familyId, babies).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -144,6 +147,7 @@ export function FamilyShell() {
       setRefreshKey((k) => k + 1);
       say('Sueño anotado para las dos');
       scheduleInactivityAlert(Date.now()).catch(() => {});
+      refreshOpenNightAlerts(familyId, babies).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -161,6 +165,7 @@ export function FamilyShell() {
       closeCloseNight();
       setRefreshKey((k) => k + 1);
       say(closures.length > 1 ? 'Noche cerrada para las dos' : 'Despertar guardado');
+      refreshOpenNightAlerts(familyId, babies).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -198,6 +203,7 @@ export function FamilyShell() {
       closeSheet();
       setRefreshKey((k) => k + 1);
       say('Registro borrado');
+      refreshOpenNightAlerts(familyId, babies).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }
