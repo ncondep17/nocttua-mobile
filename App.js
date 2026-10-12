@@ -11,6 +11,7 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 import { observeDeliveredWindowAlerts } from './src/lib/windowAlerts';
 import { registerDoseNotificationCategory, observeDoseNotificationResponses } from './src/lib/doseAlerts';
+import { registerIllnessCheckCategory, observeIllnessCheckResponses } from './src/lib/illnessCheckAlerts';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,6 +42,12 @@ export default function App() {
   useEffect(() => {
     registerDoseNotificationCategory().catch(() => {});
     const sub = observeDoseNotificationResponses();
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    registerIllnessCheckCategory().catch(() => {});
+    const sub = observeIllnessCheckResponses();
     return () => sub.remove();
   }, []);
 

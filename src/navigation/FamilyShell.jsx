@@ -17,10 +17,12 @@ import { NightModeScreen } from '../screens/main-v2/NightModeScreen';
 import { MorningScreen } from '../screens/main-v2/MorningScreen';
 import { TreatmentScreen } from '../screens/main-v2/TreatmentScreen';
 import { QuickActionsSheet } from '../screens/main-v2/overlays/QuickActionsSheet';
-import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, closeNight } from '../data/family';
+import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, closeNight, getLatestSleepEventAt } from '../data/family';
 import { getActiveEpisode, getPrescriptions, getDosesSince, startEpisode, endEpisode, upsertPrescription, deactivatePrescription, setPrescriptionInUse, logDose } from '../data/meds';
 import { addShiftNote } from '../data/shiftNotes';
 import { scheduleTodayDoseAlerts } from '../lib/scheduleTodayDoses';
+import { scheduleInactivityAlert } from '../lib/inactivityAlerts';
+import { scheduleIllnessCheckAlert, cancelIllnessCheckAlert } from '../lib/illnessCheckAlerts';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -65,6 +67,15 @@ export function FamilyShell() {
     // (Panadol, Flogobrón...) y cada una se activa por separado.
     const activeMeds = meds.filter((m) => m.inUse);
     if (activeMeds.length) scheduleTodayDoseAlerts(id, babiesData, activeMeds, dosesData).catch(() => {});
+    // El de "¿ya está bien?" sí sigue al modo enfermedad, no a una medicina
+    // puntual — cuenta desde la última dosis real, o desde que arrancó el
+    // episodio si todavía no se dio ninguna.
+    if (ep) {
+      const lastActivityAtMs = dosesData[0]?.givenAt?.getTime() ?? new Date(ep.startedAt).getTime();
+      scheduleIllnessCheckAlert({ episodeId: ep.id, familyId: id, lastActivityAtMs }).catch(() => {});
+    } else {
+      cancelIllnessCheckAlert().catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
@@ -74,6 +85,11 @@ export function FamilyShell() {
       const babiesData = await getBabies(id);
       setBabies(babiesData);
       await loadMeds(id, babiesData);
+      // Cubre reabrir la app después de días sin tocarla: si el último sueño
+      // real ya está a más de REMINDER_HOURS, el motor avisa ya mismo en vez
+      // de esperar a que se guarde un sueño nuevo.
+      const lastSleepAt = await getLatestSleepEventAt(id);
+      if (lastSleepAt) scheduleInactivityAlert(lastSleepAt.getTime()).catch(() => {});
     })();
   }, [loadMeds]);
 
@@ -111,6 +127,7 @@ export function FamilyShell() {
       closeSheet();
       setRefreshKey((k) => k + 1);
       say(split || sameRecord ? 'Sueño actualizado' : 'Sueño anotado');
+      scheduleInactivityAlert(Date.now()).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -126,6 +143,7 @@ export function FamilyShell() {
       closeSheet();
       setRefreshKey((k) => k + 1);
       say('Sueño anotado para las dos');
+      scheduleInactivityAlert(Date.now()).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }

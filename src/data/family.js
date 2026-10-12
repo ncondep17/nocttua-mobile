@@ -125,6 +125,20 @@ export async function getRecentEvents(familyId, { hours = 24, types } = {}) {
   return getEventsSince(familyId, since, types);
 }
 
+/** El sueño más reciente que haya en la base, sin importar cuánto hace — para el aviso de inactividad. null si nunca se registró ninguno. */
+export async function getLatestSleepEventAt(familyId) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('started_at')
+    .eq('family_id', familyId)
+    .eq('type', 'sleep')
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? new Date(data.started_at) : null;
+}
+
 /**
  * Balance real del banco de leche: saldo inicial (lo que ya tenía guardado
  * antes de usar la app) + todo lo extraído con destino "Al banco" − todo lo
