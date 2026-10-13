@@ -15,6 +15,7 @@ import { SettingsScreen } from '../screens/main/SettingsScreen';
 import { SleepPlanScreen } from '../screens/main/SleepPlanScreen';
 import { NightModeScreen } from '../screens/main-v2/NightModeScreen';
 import { MorningScreen } from '../screens/main-v2/MorningScreen';
+import { WinsScreen } from '../screens/main-v2/WinsScreen';
 import { TreatmentScreen } from '../screens/main-v2/TreatmentScreen';
 import { QuickActionsSheet } from '../screens/main-v2/overlays/QuickActionsSheet';
 import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, closeNight, getLatestSleepEventAt } from '../data/family';
@@ -166,6 +167,9 @@ export function FamilyShell() {
       setRefreshKey((k) => k + 1);
       say(closures.length > 1 ? 'Noche cerrada para las dos' : 'Despertar guardado');
       refreshOpenNightAlerts(familyId, babies).catch(() => {});
+      // "Cómo fue la noche" aparece sola apenas se cierra — antes había que
+      // ir a buscarla con un botón en Hoy, y por eso nadie la veía.
+      setFull('morning');
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -331,6 +335,7 @@ export function FamilyShell() {
         onEnterNightMode={() => setFull('nightMode')}
         onOpenQuickActions={() => setQuickActionsOpen(true)}
         onOpenMorning={() => setFull('morning')}
+        onOpenWins={() => setFull('wins')}
         onOpenPlan={() => setFull('sleepPlan')}
         onOpenCloseNight={openCloseNight}
         onOpenTreatment={(id) => setTreatmentId(id)}
@@ -463,6 +468,11 @@ export function FamilyShell() {
       {full === 'morning' ? (
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
           <MorningScreen onClose={() => setFull(null)} />
+        </View>
+      ) : null}
+      {full === 'wins' ? (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <WinsScreen onClose={() => setFull(null)} />
         </View>
       ) : null}
       {treatmentId ? (

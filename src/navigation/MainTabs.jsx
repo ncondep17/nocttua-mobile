@@ -9,7 +9,7 @@ import { FAMILY_TABS } from './tabs';
 
 const Tab = createBottomTabNavigator();
 
-export function MainTabs({ onLogSleep, onLogFeed, onLogPump, onLogDiaper, onOpenLog, onOpenEvent, onOpenSettings, onEnterNightMode, onOpenQuickActions, onOpenMorning, onOpenPlan, onOpenCloseNight, onOpenTreatment, onOpenMeds, onEditMeds, onMedsChanged, episode, prescriptions, doses, refreshKey }) {
+export function MainTabs({ onLogSleep, onLogFeed, onLogPump, onLogDiaper, onOpenLog, onOpenEvent, onOpenSettings, onEnterNightMode, onOpenQuickActions, onOpenMorning, onOpenWins, onOpenPlan, onOpenCloseNight, onOpenTreatment, onOpenMeds, onEditMeds, onMedsChanged, episode, prescriptions, doses, refreshKey }) {
   return (
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
@@ -31,7 +31,7 @@ export function MainTabs({ onLogSleep, onLogFeed, onLogPump, onLogDiaper, onOpen
             refreshKey={refreshKey} onOpenLog={onOpenLog}
             episode={episode} prescriptions={prescriptions} doses={doses} onOpenMeds={onOpenMeds}
             onLogDiaper={onLogDiaper}
-            onOpenSettings={onOpenSettings} onOpenMorning={onOpenMorning}
+            onOpenSettings={onOpenSettings} onOpenMorning={onOpenMorning} onOpenWins={onOpenWins}
             onOpenPlan={onOpenPlan} onOpenCloseNight={onOpenCloseNight}
           />
         )}

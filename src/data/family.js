@@ -427,6 +427,23 @@ export async function setNightShiftToday(userId, onDuty) {
   if (error) throw error;
 }
 
+/**
+ * Si nadie marcó turno hoy, todo el mundo recibe los avisos de ventana como
+ * siempre (no romper a las famílias que no usan "Equipo"). Si alguien SÍ
+ * está de turno hoy, solo esa cuenta los recibe — las demás se quedan
+ * calladas en vez de duplicar el aviso en varios teléfonos a la vez.
+ */
+export async function shouldReceiveWindowAlerts(familyId) {
+  const myId = await currentUserId();
+  if (!myId) return true;
+  const members = await getTeamMembers(familyId);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const anyOnDuty = members.some((m) => (m.night_shift_dates ?? []).includes(todayStr));
+  if (!anyOnDuty) return true;
+  const me = members.find((m) => m.profiles?.id === myId);
+  return (me?.night_shift_dates ?? []).includes(todayStr);
+}
+
 /** Última versión publicada del plan de sueño (si la asesora ya dejó una). */
 export async function getLatestPlan(familyId) {
   const { data: version, error: versionError } = await supabase

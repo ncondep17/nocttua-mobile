@@ -8,9 +8,11 @@ import { ScreenTitle, NightCard, Eyebrow, SectionRule, Avatar, CategoryIcon, Gly
 import { ScreenBody } from '../../components/v2/MobileChrome';
 import { MedStrip } from '../../components/v2/MedStrip';
 import { ACCENT, profileForBirthDate } from '../../data/profiles';
-import { planBlocks } from '../../lib/derive';
+import { planBlocks, perBaby } from '../../lib/derive';
+import { detectMilestone } from '../../lib/milestones';
+import { hasSeenMilestone, recordMilestone } from '../../lib/milestoneLog';
 import { dur, fmt, minutesOfDay, toMin } from '../../lib/time';
-import { getMyFamilyId, getBabies, getRecentEvents, getLatestSleepPlan, getSiblingType } from '../../data/family';
+import { getMyFamilyId, getBabies, getRecentEvents, getLatestSleepPlan, getSiblingType, shouldReceiveWindowAlerts } from '../../data/family';
 import { profileWithPlan } from '../../lib/assessment';
 import { agree, plural } from '../../lib/grammar';
 import {
@@ -19,6 +21,7 @@ import {
 } from '../../data/dayRecords';
 import { getShiftNotes, addShiftNote } from '../../data/shiftNotes';
 import { scheduleTodayWindowAlerts } from '../../lib/scheduleTodayWindows';
+import { cancelWindowAlert } from '../../lib/windowAlerts';
 import { supabase } from '../../lib/supabase';
 import { useNowTick } from '../../lib/useNowTick';
 import { useFeedSession } from '../../lib/useFeedSession';
@@ -91,7 +94,7 @@ function ageLabel(birthDate) {
  * primer bebé para ambas (ver profiles.js) — si algún día hay hermanos de
  * edades muy distintas, cada uno necesitará su propio perfil.
  */
-export function TodayScreen({ onOpenLog, episode, prescriptions, doses, onOpenMeds, onLogDiaper, onOpenSettings, onOpenMorning, onOpenPlan, onOpenCloseNight, refreshKey }) {
+export function TodayScreen({ onOpenLog, episode, prescriptions, doses, onOpenMeds, onLogDiaper, onOpenSettings, onOpenMorning, onOpenWins, onOpenPlan, onOpenCloseNight, refreshKey }) {
   useNowTick();
   const [babies, setBabies] = useState([]);
   const [profile, setProfile] = useState(null);
@@ -110,6 +113,7 @@ export function TodayScreen({ onOpenLog, episode, prescriptions, doses, onOpenMe
   const [notes, setNotes] = useState([]);
   const [familyId, setFamilyId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [winBanner, setWinBanner] = useState(null); // { id, text } — ver milestones.js; se apaga solo pasado el medio día
   const [showWeek, setShowWeek] = useState(false);
   // "Dejar cada una" en la tarjeta de mellizas desfasadas — no se resetea en
   // cada load() a propósito (load() corre en cada focus de la pestaña), solo
@@ -141,6 +145,19 @@ export function TodayScreen({ onOpenLog, episode, prescriptions, doses, onOpenMe
       const babyIds = babiesData.map((b) => b.id);
       const dayRecords = buildDayRecords(sleepEvents, feedEvents, babyIds);
       setRecentRecords(dayRecords);
+      // Hitos (ver milestones.js): el primero que aplique y no se haya
+      // celebrado todavía gana. Se registra siempre en el log — se MUESTRA
+      // como banner solo si todavía es antes del medio día (ver el render).
+      (async () => {
+        for (let i = 0; i < babiesData.length; i++) {
+          const m = detectMilestone(perBaby(dayRecords, i), babiesData[i].name);
+          if (m && !(await hasSeenMilestone(m.id))) {
+            await recordMilestone(m);
+            setWinBanner(m);
+            break;
+          }
+        }
+      })().catch(() => {});
       const wake = getTodayWakeMinutes(sleepEvents, babyIds);
       setTodayWake(wake);
       const naps = getTodayNaps(sleepEvents, babyIds);
@@ -157,7 +174,15 @@ export function TodayScreen({ onOpenLog, episode, prescriptions, doses, onOpenMe
       setOpenNights(getOpenNightEvent(sleepEvents, babyIds));
 
       const babyProfile = profileWithPlan(profileForBirthDate(babiesData[0]?.birth_date), plan);
-      scheduleTodayWindowAlerts(babiesData, planBlocks(babyProfile, babyIds.map((_, i) => wake[i]), naps, nightStart, dayRecords)).catch(() => {});
+      // Si hay alguien de turno hoy y no soy yo, me quedo callada en vez de
+      // sumar un aviso más al teléfono de quien no está cuidando ahora.
+      shouldReceiveWindowAlerts(fid).then((shouldNotify) => {
+        if (shouldNotify) {
+          scheduleTodayWindowAlerts(babiesData, planBlocks(babyProfile, babyIds.map((_, i) => wake[i]), naps, nightStart, dayRecords)).catch(() => {});
+        } else {
+          babiesData.forEach((b) => cancelWindowAlert(b.id).catch(() => {}));
+        }
+      }).catch(() => {});
     } finally {
       setLoading(false);
     }
@@ -357,6 +382,26 @@ export function TodayScreen({ onOpenLog, episode, prescriptions, doses, onOpenMe
           </Pressable>
         }
       />
+
+      {/* Banner de hito (ver milestones.js) — a propósito NO es un elemento
+          fijo: se apaga solo pasado el medio día para que la pantalla
+          vuelva a estar enfocada en lo que importa, que es el registro. Si
+          se cierra pasado el mediodía sigue en "Ver otros wins". */}
+      {winBanner && now.getHours() < 12 ? (
+        <View style={{ borderRadius: 18, backgroundColor: '#16162B', padding: 15, gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+            <Text style={{ flex: 1, fontSize: 14.5, lineHeight: 14.5 * 1.35, color: '#FBF7F0' }}>
+              <Text style={{ fontWeight: '600' }}>¡Vamos muy bien! </Text>{winBanner.text}
+            </Text>
+            <Pressable onPress={() => setWinBanner(null)} hitSlop={10}>
+              <Text style={{ fontSize: 15, color: '#8A8299' }}>✕</Text>
+            </Pressable>
+          </View>
+          <Pressable onPress={() => { setWinBanner(null); onOpenWins && onOpenWins(); }}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: '#F0A868' }}>Ver otros wins →</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {/* Héroe: 3 variantes mutuamente excluyentes según el estado de la
           noche (abierta / desfasada / mañana) — PROMPT-hoy-v3.md §1.1. El
