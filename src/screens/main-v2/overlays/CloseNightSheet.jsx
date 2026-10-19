@@ -113,6 +113,8 @@ export function CloseNightSheet({ open, babies, openNights, initialWho = 'both',
           value={fmt(wakeMin)}
           onDec={() => setWakeMin((m) => ((m - 5) + 1440) % 1440)}
           onInc={() => setWakeMin((m) => (m + 5) % 1440)}
+          dateValue={(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return new Date(d.getTime() + wakeMin * 60000); })()}
+          onChangeDate={(d) => setWakeMin(minutesOfDay(d))}
         />
       </View>
 

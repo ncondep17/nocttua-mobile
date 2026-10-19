@@ -1,4 +1,6 @@
-import { View, Text, Pressable } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Pressable, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { theme } from '@nocttua/theme/native';
 import { useHoldRepeat } from '../../lib/useHoldRepeat';
@@ -164,15 +166,37 @@ export function Stepper({ label, value, onDec, onInc, minW = 62 }) {
  * noche"): elegir una hora en pasos de 5 min sin abrir el selector nativo.
  * El conteo vive afuera (onDec/onInc corren sobre el estado del caller) —
  * este componente solo la muestra.
+ *
+ * `dateValue`/`onChangeDate` son opcionales: si se pasan, tocar la hora
+ * abre el selector nativo (rueda en iOS, diálogo en Android) para saltar
+ * directo a una hora lejana — sumar de a 5 min para llegar de "ahora" a
+ * las 8pm era el caso lento que esto resuelve. Sin esos props, el
+ * componente se comporta exactamente como antes.
  */
-export function TimeStepper({ value, onDec, onInc, size = 32 }) {
+export function TimeStepper({ value, onDec, onInc, size = 32, dateValue, onChangeDate }) {
+  const [showAndroidPicker, setShowAndroidPicker] = useState(false);
   const btnStyle = { width: 40, height: 40, borderRadius: 12, borderWidth: 1, borderColor: '#DCD4C8', alignItems: 'center', justifyContent: 'center' };
   const dec = useHoldRepeat(onDec);
   const inc = useHoldRepeat(onInc);
+  const canPick = !!(dateValue && onChangeDate);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
       <Pressable {...dec} style={btnStyle}><Text style={{ fontSize: 18, color: '#4A4459' }}>−</Text></Pressable>
-      <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: size, color: '#16162B', minWidth: size * 2.2, textAlign: 'center' }}>{value}</Text>
+      {canPick && Platform.OS === 'ios' ? (
+        <DateTimePicker value={dateValue} mode="time" display="compact" onChange={(_, selected) => selected && onChangeDate(selected)} />
+      ) : (
+        <Pressable disabled={!canPick} onPress={() => setShowAndroidPicker(true)}>
+          <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: size, color: '#16162B', minWidth: size * 2.2, textAlign: 'center' }}>{value}</Text>
+        </Pressable>
+      )}
+      {canPick && Platform.OS !== 'ios' && showAndroidPicker ? (
+        <DateTimePicker
+          value={dateValue}
+          mode="time"
+          display="default"
+          onChange={(_, selected) => { setShowAndroidPicker(false); if (selected) onChangeDate(selected); }}
+        />
+      ) : null}
       <Pressable {...inc} style={btnStyle}><Text style={{ fontSize: 18, color: '#4A4459' }}>＋</Text></Pressable>
     </View>
   );

@@ -419,6 +419,8 @@ export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, 
                 value={fmt(minutesOfDay(asleep))}
                 onDec={() => { setAsleepTouched(true); setAsleep((d) => new Date(d.getTime() - 5 * 60000)); }}
                 onInc={() => { setAsleepTouched(true); setAsleep((d) => new Date(d.getTime() + 5 * 60000)); }}
+                dateValue={asleep}
+                onChangeDate={(d) => { setAsleepTouched(true); setAsleep(d); }}
               />
               {/* Si se acaba de dormir, ir a buscar "ahora" a fuerza de +
                   desde una hora sugerida lejana (ej. la del plan, que puede

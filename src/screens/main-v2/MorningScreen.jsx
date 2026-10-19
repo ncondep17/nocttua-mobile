@@ -89,6 +89,11 @@ export function MorningScreen({ onClose }) {
   }
 
   const dateLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase();
+  // La pantalla se abre sola al cerrar la noche (ver FamilyShell), y eso no
+  // siempre pasa a las 6am — "Buenos días" fijo quedaba raro cerrando una
+  // noche de prueba a las 2pm.
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FBF7F0' }}>
@@ -98,7 +103,7 @@ export function MorningScreen({ onClose }) {
             <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase', color: '#8A8299' }}>
               {dateLabel} · LA NOCHE DE ANOCHE
             </Text>
-            <Text style={{ fontFamily: theme.fontFamily.displayApp, fontSize: 31, color: '#16162B' }}>Buenos días</Text>
+            <Text style={{ fontFamily: theme.fontFamily.displayApp, fontSize: 31, color: '#16162B' }}>{greeting}</Text>
           </View>
           <Pressable onPress={onClose}><Text style={{ fontSize: 15, color: '#6B5DD3' }}>Cerrar</Text></Pressable>
         </View>
@@ -203,6 +208,11 @@ export function MorningScreen({ onClose }) {
               </View>
             ))}
           </View>
+          <Text style={{ fontSize: 11.5, color: '#9A8B76' }}>
+            {rows.some((r) => r.scoreInfo?.insufficientHistory)
+              ? 'Todavía usa el promedio de la edad — se vuelve personalizado con 3 noches registradas.'
+              : 'Siempre dice "sugerido": es una predicción para un día que todavía no pasó, ya calculada con el patrón real del bebé.'}
+          </Text>
         </View>
       </ScrollView>
     </View>
