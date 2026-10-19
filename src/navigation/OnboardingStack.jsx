@@ -19,7 +19,12 @@ export function OnboardingStack({ onSelectTwins }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
       <Stack.Screen name="Welcome">
-        {({ navigation }) => <WelcomeScreen onNext={() => navigation.navigate('BabyCount')} />}
+        {({ navigation }) => (
+          <WelcomeScreen
+            onNext={() => navigation.navigate('BabyCount')}
+            onHaveAccount={() => navigation.navigate('AppleAuth')}
+          />
+        )}
       </Stack.Screen>
       <Stack.Screen name="BabyCount">
         {({ navigation }) => (

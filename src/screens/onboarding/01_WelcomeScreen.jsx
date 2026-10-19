@@ -11,7 +11,7 @@ import { Logo } from '../../components/brand/Logo';
  * Todo en el mismo lugar."); el resto de las 10 pantallas respeta el texto
  * aprobado en SPEC.md palabra por palabra.
  */
-export function WelcomeScreen({ onNext }) {
+export function WelcomeScreen({ onNext, onHaveAccount }) {
   const insets = useSafeAreaInsets();
   const rise = useRef(new Animated.Value(0)).current;
 
@@ -43,7 +43,7 @@ export function WelcomeScreen({ onNext }) {
         />
         <View style={{ gap: 12 }}>
           <CreamButton onPress={onNext}>Empezar</CreamButton>
-          <Text onPress={onNext} style={{ textAlign: 'center', fontSize: 14, color: '#B9B2C9' }}>Ya tengo cuenta</Text>
+          <Text onPress={onHaveAccount} style={{ textAlign: 'center', fontSize: 14, color: '#B9B2C9' }}>Ya tengo cuenta</Text>
         </View>
       </Animated.View>
     </NightCanvas>
