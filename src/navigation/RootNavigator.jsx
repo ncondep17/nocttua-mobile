@@ -11,13 +11,20 @@ import { RoleScreen } from '../screens/onboarding/RoleScreen';
 import { AssessmentFlow } from '../screens/onboarding/assessment/AssessmentFlow';
 
 /**
- * Sin sesión -> OnboardingStack (01-08, termina en Apple).
- * Sesión recién creada en esta corrida ->
+ * Sin sesión -> OnboardingStack (01-08, termina en Apple o correo).
+ * Sesión autenticada, sin família todavía (alta nueva, o se cerró la app a
+ * mitad del onboarding la vez anterior) ->
  *   09_AccountType -> 10_Ready -> (si iba sola) BabySurvey -> FamilyShell
  *                              -> (si se vinculó con código) RoleScreen -> FamilyShell
- * Sesión ya existente al abrir la app (relanzamiento) -> se verifica que la
- * cuenta ya tenga família creada; si no (quedó a mitad del onboarding la
- * vez anterior), retoma en 09 en vez de romper contra FamilyShell.
+ * Sesión autenticada con família ya creada (relanzamiento normal, o un
+ * "Ya tengo cuenta"/Apple Sign In de una cuenta existente después de
+ * reinstalar) -> FamilyShell directo, sin pasar por el onboarding de nuevo.
+ *
+ * Quién tiene família ya o no es lo único que decide esto — no el tipo de
+ * evento de auth: antes `onAuthStateChange`'SIGNED_IN' mandaba siempre a
+ * 09_AccountType, lo cual estaba bien para un alta nueva pero mandaba a
+ * cualquiera que iniciara sesión en una cuenta YA EXISTENTE (reinstalar y
+ * tocar "Ya tengo cuenta") a repetir el onboarding entero.
  */
 export function RootNavigator() {
   const [session, setSession] = useState(undefined);
@@ -27,17 +34,9 @@ export function RootNavigator() {
   const [familyChecked, setFamilyChecked] = useState(false);
 
   useEffect(() => {
-    // getSession() resuelve una sesión ya persistida (relanzamiento de la
-    // app): eso NO debe disparar el flujo post-registro. onAuthStateChange
-    // también emite un evento inicial con esa misma sesión restaurada — el
-    // tipo de evento 'SIGNED_IN' es lo único que distingue un login real
-    // ocurrido en esta corrida de una sesión que ya existía; comparar por
-    // referencia previa es una carrera (el evento inicial puede llegar antes
-    // de que getSession() resuelva) y fue la causa de saltarse el onboarding.
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      if (event === 'SIGNED_IN') setPostAuthStep('accountType');
     });
     return () => sub.subscription.unsubscribe();
   }, []);
