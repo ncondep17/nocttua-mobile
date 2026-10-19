@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Alert, Pressable } from 'react-native';
+import { View, Text, Alert, Pressable, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { theme } from '@nocttua/theme/native';
@@ -8,6 +8,7 @@ import { Logo } from '../../components/brand/Logo';
 import { TextField } from '../../components/forms/TextArea';
 import { Button } from '../../components/core/Button';
 import { supabase } from '../../lib/supabase';
+import { TERMS_URL, PRIVACY_URL } from '../../lib/legalLinks';
 
 /**
  * 08 · Acceso — Apple o correo/contraseña. El cambio de sesión lo toma
@@ -135,7 +136,10 @@ export function AppleAuthScreen() {
         )}
 
         <Text style={{ textAlign: 'center', fontSize: 12, lineHeight: 12 * 1.6, color: '#8E87B5' }}>
-          Al continuar aceptas los <Text style={{ color: '#C9C1D8' }}>Términos</Text> y la <Text style={{ color: '#C9C1D8' }}>Privacidad</Text>.
+          Al continuar aceptas los{' '}
+          <Text style={{ color: '#C9C1D8', textDecorationLine: 'underline' }} onPress={() => Linking.openURL(TERMS_URL)}>Términos</Text>
+          {' '}y la{' '}
+          <Text style={{ color: '#C9C1D8', textDecorationLine: 'underline' }} onPress={() => Linking.openURL(PRIVACY_URL)}>Privacidad</Text>.
         </Text>
       </View>
     </NightCanvas>

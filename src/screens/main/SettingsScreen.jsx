@@ -11,6 +11,7 @@ import { TextField } from '../../components/forms/TextArea';
 import { DateField } from '../../components/forms/DateField';
 import { getMyFamilyId, getBabies, updateBaby, addBaby, deleteBaby, getMyProfileAndRelationship, updateMyDisplayName, setMyRelationship, getFeedingMode, updateFeedingMode, deleteMyAccount } from '../../data/family';
 import { supabase } from '../../lib/supabase';
+import { TERMS_URL, PRIVACY_URL, SUPPORT_URL } from '../../lib/legalLinks';
 
 const PERMISSION_COPY = {
   granted: 'Activados.',
@@ -354,6 +355,20 @@ export function SettingsScreen({ onClose, onOpenSleepPlan }) {
         <Button variant="secondary" onPress={handleNotifications}>
           {permission === 'undetermined' ? 'Activar avisos' : 'Abrir Ajustes del sistema'}
         </Button>
+      </Card>
+
+      <Card title="Legal">
+        <View style={{ gap: theme.space[5] }}>
+          <Text onPress={() => Linking.openURL(PRIVACY_URL)} style={{ fontFamily: theme.fontFamily.uiApp, fontSize: theme.fontSize.base, color: theme.color.violeta600 }}>
+            Política de privacidad
+          </Text>
+          <Text onPress={() => Linking.openURL(TERMS_URL)} style={{ fontFamily: theme.fontFamily.uiApp, fontSize: theme.fontSize.base, color: theme.color.violeta600 }}>
+            Términos de uso
+          </Text>
+          <Text onPress={() => Linking.openURL(SUPPORT_URL)} style={{ fontFamily: theme.fontFamily.uiApp, fontSize: theme.fontSize.base, color: theme.color.violeta600 }}>
+            Soporte
+          </Text>
+        </View>
       </Card>
 
       <Button variant="danger" size="lg" full onPress={handleSignOut}>Cerrar sesión</Button>
