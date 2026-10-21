@@ -25,6 +25,7 @@ import { scheduleTodayDoseAlerts } from '../lib/scheduleTodayDoses';
 import { scheduleInactivityAlert } from '../lib/inactivityAlerts';
 import { scheduleIllnessCheckAlert, cancelIllnessCheckAlert } from '../lib/illnessCheckAlerts';
 import { refreshOpenNightAlerts } from '../lib/openNightAlerts';
+import { refreshOpenNapAlerts } from '../lib/openNapAlerts';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -93,6 +94,7 @@ export function FamilyShell() {
       const lastSleepAt = await getLatestSleepEventAt(id);
       if (lastSleepAt) scheduleInactivityAlert(lastSleepAt.getTime()).catch(() => {});
       refreshOpenNightAlerts(id, babiesData).catch(() => {});
+      refreshOpenNapAlerts(id, babiesData).catch(() => {});
     })();
   }, [loadMeds]);
 
@@ -132,6 +134,7 @@ export function FamilyShell() {
       say(split || sameRecord ? 'Sueño actualizado' : 'Sueño anotado');
       scheduleInactivityAlert(Date.now()).catch(() => {});
       refreshOpenNightAlerts(familyId, babies).catch(() => {});
+      refreshOpenNapAlerts(familyId, babies).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -163,6 +166,7 @@ export function FamilyShell() {
         : 'Sueño anotado para las dos');
       scheduleInactivityAlert(Date.now()).catch(() => {});
       refreshOpenNightAlerts(familyId, babies).catch(() => {});
+      refreshOpenNapAlerts(familyId, babies).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }
@@ -181,6 +185,7 @@ export function FamilyShell() {
       setRefreshKey((k) => k + 1);
       say(closures.length > 1 ? 'Noche cerrada para las dos' : 'Despertar guardado');
       refreshOpenNightAlerts(familyId, babies).catch(() => {});
+      refreshOpenNapAlerts(familyId, babies).catch(() => {});
       // "Cómo fue la noche" aparece sola apenas se cierra — antes había que
       // ir a buscarla con un botón en Hoy, y por eso nadie la veía.
       setFull('morning');
@@ -222,6 +227,7 @@ export function FamilyShell() {
       setRefreshKey((k) => k + 1);
       say('Registro borrado');
       refreshOpenNightAlerts(familyId, babies).catch(() => {});
+      refreshOpenNapAlerts(familyId, babies).catch(() => {});
     } catch (err) {
       say(err.message ?? String(err));
     }

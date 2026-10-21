@@ -139,6 +139,20 @@ export async function getOpenNightEvents(familyId) {
   return data;
 }
 
+/** Igual que getOpenNightEvents pero para siestas — para el aviso de "siesta sin cerrar" (olvidarla unas horas es mucho más fácil de pasar por alto que una noche). */
+export async function getOpenNapEvents(familyId) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, baby_id, started_at, fell_asleep_at')
+    .eq('family_id', familyId)
+    .eq('type', 'sleep')
+    .eq('session', 'nap')
+    .is('ended_at', null)
+    .not('baby_id', 'is', null);
+  if (error) throw error;
+  return data;
+}
+
 /** El sueño más reciente que haya en la base, sin importar cuánto hace — para el aviso de inactividad. null si nunca se registró ninguno. */
 export async function getLatestSleepEventAt(familyId) {
   const { data, error } = await supabase
