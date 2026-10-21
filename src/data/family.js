@@ -277,7 +277,7 @@ export async function updateEvent(eventId, payload, previousRow) {
 }
 
 /** Reconstruye el payload camelCase completo de una fila existente de `events` (snake_case → camelCase) — necesario porque `eventRow`/`updateEvent` recomponen la fila entera, no aplican un patch parcial; sin esto, confirmar solo la hora de despertar borraría el resto de los campos ya cargados. */
-function payloadFromRow(row) {
+export function payloadFromRow(row) {
   return {
     babyId: row.baby_id, type: row.type, startedAt: row.started_at, fellAsleepAt: row.fell_asleep_at,
     endedAt: row.ended_at, place: row.place, endPlace: row.end_place, kind: row.kind, side: row.side,
@@ -307,6 +307,27 @@ export async function confirmNormalWake(existingRow, wakeTimeISO) {
  * preguntarlo: si la noche ya empezó y sigue abierta, la toma es nocturna
  * por definición, sin importar la hora del reloj.
  */
+/**
+ * El sueño todavía abierto (sin ended_at) de este bebé y esta sesión
+ * ('nap'/'night'), o null — para completar/cerrar el que ya existe en vez
+ * de insertar uno nuevo y dejar el viejo abierto y huérfano.
+ */
+export async function getOpenSleepEvent(familyId, babyId, session) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('family_id', familyId)
+    .eq('baby_id', babyId)
+    .eq('type', 'sleep')
+    .eq('session', session)
+    .is('ended_at', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function hasOpenNight(familyId, babyId) {
   const { data, error } = await supabase
     .from('events')

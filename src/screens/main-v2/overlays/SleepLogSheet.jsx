@@ -374,7 +374,13 @@ export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, 
         <Text onPress={onClose} style={{ fontSize: 13, color: '#6B5DD3' }}>Cerrar</Text>
       </View>
 
-      {babies.length > 1 ? (
+      {/* "Las dos" se saca mientras se completa un despertar de una siesta
+          todavía abierta (`editing` apunta a esa siesta puntual, de UNA
+          bebé) — cambiar a "Las dos" ahí perdía de vista ese registro
+          abierto y la hoja caía en captura rápida de una siesta NUEVA para
+          las dos, sin cerrar ninguna de las dos que ya estaban abiertas:
+          quedaban 4 registros de siesta sueltos en vez de 2 cerrados. */}
+      {babies.length > 1 && !(editing && editing.ended_at == null) ? (
         <SegTabs
           items={[...babies.map((baby, i) => ({ id: i, label: baby.name })), { id: 'both', label: 'Las dos' }]}
           active={b}

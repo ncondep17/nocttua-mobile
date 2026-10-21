@@ -50,7 +50,7 @@ function NightChip({ active, dotColor, label, onPress }) {
       }}
     >
       <View style={{ width: 8, height: 8, borderRadius: 99, backgroundColor: active ? dotColor : 'transparent', borderWidth: 1, borderColor: dotColor }} />
-      <Text style={{ fontSize: 14.5, fontWeight: '600', color: active ? '#DCD6F0' : '#4A4763' }}>{label}</Text>
+      <Text style={{ fontSize: 14.5, fontWeight: '600', color: active ? '#DCD6F0' : '#8E87B5' }}>{label}</Text>
     </Pressable>
   );
 }
@@ -64,7 +64,7 @@ function PillChip({ active, label, onPress, mono }) {
         borderWidth: 1, borderColor: active ? '#4A4468' : '#1E1C36', backgroundColor: active ? '#1B1934' : 'transparent',
       }}
     >
-      <Text style={{ fontFamily: mono ? theme.fontFamily.mono : undefined, fontSize: mono ? 13 : 14, color: active ? '#DCD6F0' : '#4A4763' }}>{label}</Text>
+      <Text style={{ fontFamily: mono ? theme.fontFamily.mono : undefined, fontSize: mono ? 13 : 14, color: active ? '#DCD6F0' : '#8E87B5' }}>{label}</Text>
     </Pressable>
   );
 }
@@ -190,8 +190,8 @@ export function NightModeScreen({ familyId, babies, onClose }) {
     <View style={{ flex: 1, backgroundColor: '#0A0A14' }}>
       <View style={{ flex: 1, paddingTop: 16 + insets.top, paddingHorizontal: 20, paddingBottom: 8 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 2.2, textTransform: 'uppercase', color: '#4A4763' }}>Modo noche</Text>
-          <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: '#3A3854' }}>
+          <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 2.2, textTransform: 'uppercase', color: '#8E87B5' }}>Modo noche</Text>
+          <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: '#8E87B5' }}>
             {relationship ? 'Turno · ' + RELATIONSHIP_LABEL[relationship] : ''}
           </Text>
         </View>
@@ -212,7 +212,7 @@ export function NightModeScreen({ familyId, babies, onClose }) {
           // despertar, para no aprender una interacción nueva.
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 26 }}>
             <View style={{ alignItems: 'center', gap: 6 }}>
-              <Glyph category="sueno" size={30} color="#4A4763" />
+              <Glyph category="sueno" size={30} color="#8E87B5" />
               <Text style={{ fontFamily: theme.fontFamily.displayApp, fontSize: 22, color: '#DCD6F0', textAlign: 'center' }}>
                 {(selectedLabel ?? '').toUpperCase() === 'LAS DOS' ? 'Todavía no empezó la noche' : selectedLabel + ' todavía no empezó la noche'}
               </Text>
@@ -227,17 +227,17 @@ export function NightModeScreen({ familyId, babies, onClose }) {
               <Text style={{ fontFamily: theme.fontFamily.displayApp, fontSize: 27, color: '#DCD6F0' }}>
                 {plural(selectedBabies, 'Se durmió', 'Se durmieron')}
               </Text>
-              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 11, color: '#5A5678' }}>ahora · {fmt(minutesOfDay(now))}</Text>
+              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 11, color: '#8E87B5' }}>ahora · {fmt(minutesOfDay(now))}</Text>
             </Pressable>
 
-            <Text style={{ fontSize: 12.5, lineHeight: 18, color: '#4A4763', textAlign: 'center', maxWidth: 250 }}>
+            <Text style={{ fontSize: 12.5, lineHeight: 18, color: '#8E87B5', textAlign: 'center', maxWidth: 250 }}>
               Un toque abre la noche. Cuando se despierte, volvés a esta pantalla para cerrarla.
             </Text>
           </View>
         ) : step === 0 ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 26 }}>
             <View style={{ alignItems: 'center', gap: 6 }}>
-              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: '#4A4763' }}>
+              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: '#8E87B5' }}>
                 {(selectedLabel ?? '').toUpperCase() + ' · ' + agree(selectedBabies, 'despierto', 'despierta').toUpperCase()}
               </Text>
               <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 40, lineHeight: 40, color: '#6E6A8E' }}>{awakeTimer}</Text>
@@ -249,10 +249,10 @@ export function NightModeScreen({ familyId, babies, onClose }) {
               <Text style={{ fontFamily: theme.fontFamily.displayApp, fontSize: 27, color: '#DCD6F0' }}>
                 {plural(selectedBabies, 'Se durmió', 'Se durmieron')}
               </Text>
-              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 11, color: '#5A5678' }}>ahora · {fmt(minutesOfDay(now))}</Text>
+              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 11, color: '#8E87B5' }}>ahora · {fmt(minutesOfDay(now))}</Text>
             </Pressable>
 
-            <Text style={{ fontSize: 12.5, lineHeight: 18, color: '#4A4763', textAlign: 'center', maxWidth: 250 }}>
+            <Text style={{ fontSize: 12.5, lineHeight: 18, color: '#8E87B5', textAlign: 'center', maxWidth: 250 }}>
               Un toque cierra el despertar. Todo lo demás se puede ajustar mañana.
             </Text>
             {missingNight ? (
@@ -266,12 +266,12 @@ export function NightModeScreen({ familyId, babies, onClose }) {
         {step === 1 ? (
           <View style={{ flex: 1, gap: 18, paddingTop: 26 }}>
             <View style={{ gap: 4 }}>
-              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: '#4A4763' }}>
+              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: '#8E87B5' }}>
                 {plural(selectedBabies, 'Se durmió', 'Se durmieron') + ' a las'}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
                 <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 52, lineHeight: 52, color: '#DCD6F0' }}>{fmt(sleptMin)}</Text>
-                <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 12, color: '#5A5678' }}>{off === 0 ? 'hace un momento' : 'hace ' + -off + ' min'}</Text>
+                <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 12, color: '#8E87B5' }}>{off === 0 ? 'hace un momento' : 'hace ' + -off + ' min'}</Text>
               </View>
             </View>
 
@@ -282,7 +282,7 @@ export function NightModeScreen({ familyId, babies, onClose }) {
             </View>
 
             <View style={{ gap: 9 }}>
-              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: '#4A4763' }}>
+              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: '#8E87B5' }}>
                 {plural(selectedBabies, 'Cuánto tardó en dormirse', 'Cuánto tardaron en dormirse')}
               </Text>
               <View style={{ flexDirection: 'row', gap: 7 }}>
@@ -291,7 +291,7 @@ export function NightModeScreen({ familyId, babies, onClose }) {
             </View>
 
             <View style={{ gap: 9 }}>
-              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: '#4A4763' }}>
+              <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1.8, textTransform: 'uppercase', color: '#8E87B5' }}>
                 {plural(selectedBabies, 'Cómo se durmió', 'Cómo se durmieron') + ' · opcional'}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -319,7 +319,7 @@ export function NightModeScreen({ familyId, babies, onClose }) {
             <Text style={{ fontFamily: theme.fontFamily.displayApp, fontSize: 28, color: '#DCD6F0', textAlign: 'center' }}>
               {'Listo. ' + (saved?.label ?? '') + ', ' + (saved?.time ?? '') + '.'}
             </Text>
-            <Text style={{ fontSize: 13.5, lineHeight: 20, color: '#4A4763', textAlign: 'center', maxWidth: 260 }}>{savedNote}</Text>
+            <Text style={{ fontSize: 13.5, lineHeight: 20, color: '#8E87B5', textAlign: 'center', maxWidth: 260 }}>{savedNote}</Text>
             <Pressable onPress={resetNight} style={{ marginTop: 10, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: '#2A2848' }}>
               <Text style={{ fontSize: 13.5, color: '#6E6A8E' }}>Registrar otro despertar</Text>
             </Pressable>
@@ -327,10 +327,10 @@ export function NightModeScreen({ familyId, babies, onClose }) {
         ) : null}
 
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, paddingBottom: 8 + insets.bottom, borderTopWidth: 1, borderTopColor: '#14142A' }}>
-          <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10.5, color: '#33314C' }}>
+          <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10.5, color: '#8E87B5' }}>
             {footWakeCount > 0 ? footWakeCount + ' despertar' + (footWakeCount === 1 ? '' : 'es') + ' esta noche' : 'Ningún despertar todavía'}
           </Text>
-          {/* Antes era solo texto mono 10.5px en #33314C (el tono "faint" del
+          {/* Antes era solo texto mono 10.5px en #8E87B5 (el tono "faint" del
               modo noche) — a oscuras y medio dormida, ese botón era casi
               invisible. Ahora tiene borde y más contraste, sin llegar a ser
               tan brillante como para desvelar. */}

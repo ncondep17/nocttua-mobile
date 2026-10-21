@@ -18,7 +18,7 @@ import { MorningScreen } from '../screens/main-v2/MorningScreen';
 import { WinsScreen } from '../screens/main-v2/WinsScreen';
 import { TreatmentScreen } from '../screens/main-v2/TreatmentScreen';
 import { QuickActionsSheet } from '../screens/main-v2/overlays/QuickActionsSheet';
-import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, closeNight, getLatestSleepEventAt } from '../data/family';
+import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, closeNight, getLatestSleepEventAt, getOpenSleepEvent, payloadFromRow } from '../data/family';
 import { getActiveEpisode, getPrescriptions, getDosesSince, startEpisode, endEpisode, upsertPrescription, deactivatePrescription, setPrescriptionInUse, logDose } from '../data/meds';
 import { addShiftNote } from '../data/shiftNotes';
 import { scheduleTodayDoseAlerts } from '../lib/scheduleTodayDoses';
@@ -141,12 +141,26 @@ export function FamilyShell() {
   // ocultan ese botón mientras se edita): una fila independiente por bebé
   // desde el principio, nunca una fila compartida con baby_id null. Mismo
   // patrón que ya usa handleSaveDoseBoth más abajo para medicinas.
+  // Respaldo además del fix en SleepLogSheet (que ya saca "Las dos" mientras
+  // se completa una siesta abierta): si de todos modos llega acá una bebé
+  // que YA tiene un sueño abierto de esta sesión, nunca se inserta un
+  // segundo registro encima — eso es lo que dejaba siestas duplicadas y
+  // huérfanas. Mejor avisar y que se complete aparte que duplicar o pisar
+  // con datos adivinados.
   const handleSaveSleepBoth = async (payloadBase) => {
     try {
-      await Promise.all(babies.map((b) => insertEvent(familyId, { ...payloadBase, babyId: b.id })));
+      const results = await Promise.all(babies.map(async (baby) => {
+        const open = await getOpenSleepEvent(familyId, baby.id, payloadBase.session);
+        if (open) return { skipped: true, name: baby.name };
+        await insertEvent(familyId, { ...payloadBase, babyId: baby.id });
+        return { skipped: false };
+      }));
       closeSheet();
       setRefreshKey((k) => k + 1);
-      say('Sueño anotado para las dos');
+      const skipped = results.filter((r) => r.skipped).map((r) => r.name);
+      say(skipped.length
+        ? 'Guardado — ' + skipped.join(' y ') + ' ya tenía una siesta abierta, complétala aparte.'
+        : 'Sueño anotado para las dos');
       scheduleInactivityAlert(Date.now()).catch(() => {});
       refreshOpenNightAlerts(familyId, babies).catch(() => {});
     } catch (err) {
