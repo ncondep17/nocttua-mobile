@@ -323,9 +323,17 @@ export function TodayScreen({ onOpenLog, episode, prescriptions, doses, onOpenMe
           // la hora y el humor. Antes esto mandaba las dos a CloseNightSheet,
           // que no tiene datos de siestas y solo ofrecía "Las dos" sin poder
           // guardar nada.
-          onPress: bi < 0 ? undefined : e.session === 'night'
-            ? () => onOpenCloseNight && onOpenCloseNight(bi, openNights, planWakeMinArr)
-            : () => onOpenLog && onOpenLog('Siesta', bi, 'nap', e, false),
+          //
+          // `bi` da -1 para una fila vieja "aplicar a ambas" (baby_id null,
+          // de antes de que esto se separara por bebé) — ANTES eso dejaba
+          // onPress en undefined, un registro abierto que no se podía tocar
+          // para cerrar ni borrar nunca más. belongsTo() ya trata baby_id
+          // null como "de cualquiera de las dos", así que CloseNightSheet y
+          // SleepLogSheet (+ splitSharedIfNeeded en FamilyShell) ya saben
+          // resolverlo igual — solo hacía falta no rendirse antes de llegar.
+          onPress: e.session === 'night'
+            ? () => onOpenCloseNight && onOpenCloseNight(Math.max(bi, 0), openNights, planWakeMinArr)
+            : () => onOpenLog && onOpenLog('Siesta', Math.max(bi, 0), 'nap', e, false),
         });
         return;
       }
