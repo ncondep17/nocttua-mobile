@@ -361,9 +361,14 @@ export function twinVerdict(records, names) {
     : (diff > 0 ? nameB : nameA) + ' tarda ' + Math.abs(diff) + ' min más en dormirse y necesitó brazos ' + (diff > 0 ? armsB : armsA) + ' de ' + Math.max(a.length, b.length) + ' noches, contra ' + (diff > 0 ? armsA : armsB) + ' de ' + (diff > 0 ? nameA : nameB) + '. Misma casa, mismo horario: la diferencia está en cómo la acompañamos.';
 }
 
-/** Sueño real de 24 h contra el rango esperado de la edad. */
-export function restRows(p, records, babyCount) {
-  return Array.from({ length: babyCount }, (_, b) => b).map((b) => {
+/**
+ * Sueño real de 24 h contra el rango esperado de la edad. `babyIndices` es
+ * la lista de bebés a mostrar — normalmente solo la seleccionada en la
+ * pantalla (ver 03_AnalyticsScreen.jsx), para no mezclar con el resto de la
+ * pantalla, que ya filtra por esa misma selección.
+ */
+export function restRows(p, records, babyIndices) {
+  return babyIndices.map((b) => {
     const own = withNap(perBaby(records, b));
     const r = own[own.length - 1];
     if (!r) return null;

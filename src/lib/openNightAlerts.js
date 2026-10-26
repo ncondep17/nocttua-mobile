@@ -46,14 +46,19 @@ async function scheduleOpenNightAlert({ babyId, babyName, referenceAtMs }) {
 
   const body = `La noche de ${babyName} sigue abierta — ¿ya se despertó? Cierra la noche para que los patrones no se desordenen.`;
   const immediate = triggerAt.getTime() <= Date.now();
-  const notificationId = await Notifications.scheduleNotificationAsync({
-    content: { title: 'Nocttua', body, data: { kind: 'open_night', babyId } },
-    trigger: immediate ? null : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
-  });
-
-  map[babyId] = { alertKey, notificationId };
-  await saveMap(map);
-  await logTelemetry('open_night_alert_scheduled', { babyId, ok: true, immediate, triggerAt: triggerAt.toISOString() });
+  // Ver el mismo try/catch en openNapAlerts.js: antes, un fallo acá no
+  // dejaba rastro — el aviso no se agendaba y nadie se enteraba nunca.
+  try {
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content: { title: 'Nocttua', body, data: { kind: 'open_night', babyId } },
+      trigger: immediate ? null : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
+    });
+    map[babyId] = { alertKey, notificationId };
+    await saveMap(map);
+    await logTelemetry('open_night_alert_scheduled', { babyId, ok: true, immediate, triggerAt: triggerAt.toISOString() });
+  } catch (err) {
+    await logTelemetry('open_night_alert_scheduled', { babyId, ok: false, reason: 'schedule_failed', error: String(err?.message ?? err) });
+  }
 }
 
 async function cancelOpenNightAlert(babyId) {

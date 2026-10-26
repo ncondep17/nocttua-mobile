@@ -72,6 +72,17 @@ function hm(iso) {
   return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
 }
 
+/** "Hoy" / "Ayer" / "Lun 20 oct" — para separar los días en "Lo que ya pasó hoy" cuando se expande a VER 7 DÍAS, donde una sola lista de horas sin fecha no decía de qué día era cada una. */
+function dayLabel(ts) {
+  const d = new Date(ts);
+  const startOfDay = new Date(d); startOfDay.setHours(0, 0, 0, 0);
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((startOfToday.getTime() - startOfDay.getTime()) / 86400000);
+  if (diffDays === 0) return 'Hoy';
+  if (diffDays === 1) return 'Ayer';
+  return d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 /** "21 meses" / "2 años" — igual que profileForBirthDate, en base al primer bebé (ver nota de simplificación arriba). */
 function ageLabel(birthDate) {
   if (!birthDate) return '';
@@ -781,16 +792,27 @@ export function TodayScreen({ onOpenLog, episode, prescriptions, doses, onOpenMe
           <View style={{ borderRadius: 16, borderWidth: 1, borderColor: '#E4DCD0', backgroundColor: 'white', overflow: 'hidden' }}>
             {todayFeedRows.map((r, i) => {
               const Row = r.onPress ? Pressable : View;
+              // Separador de día solo con VER 7 DÍAS activo — con "hoy" nomás
+              // todas las filas son del mismo día, no hace falta repetirlo.
+              const prevDay = i > 0 ? dayLabel(todayFeedRows[i - 1].ts) : null;
+              const thisDay = showWeek ? dayLabel(r.ts) : null;
+              const showDayHeader = showWeek && thisDay !== prevDay;
               return (
-                <Row
-                  key={r.id}
-                  onPress={r.onPress}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 11, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#F0EAE0' }}
-                >
-                  <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 12, color: '#8A8299', minWidth: 40 }}>{r.time}</Text>
-                  <View style={{ width: 8, height: 8, borderRadius: 99, backgroundColor: r.dot }} />
-                  <Text style={{ flex: 1, fontSize: 13.5, color: '#16162B' }} numberOfLines={1}>{r.text}</Text>
-                </Row>
+                <View key={r.id}>
+                  {showDayHeader ? (
+                    <View style={{ paddingHorizontal: 14, paddingTop: i === 0 ? 11 : 13, paddingBottom: 4, backgroundColor: '#FBF9F4', borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#F0EAE0' }}>
+                      <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', color: '#A9A2B5' }}>{thisDay}</Text>
+                    </View>
+                  ) : null}
+                  <Row
+                    onPress={r.onPress}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 11, borderTopWidth: i === 0 || showDayHeader ? 0 : 1, borderTopColor: '#F0EAE0' }}
+                  >
+                    <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 12, color: '#8A8299', minWidth: 40 }}>{r.time}</Text>
+                    <View style={{ width: 8, height: 8, borderRadius: 99, backgroundColor: r.dot }} />
+                    <Text style={{ flex: 1, fontSize: 13.5, color: '#16162B' }} numberOfLines={1}>{r.text}</Text>
+                  </Row>
+                </View>
               );
             })}
           </View>

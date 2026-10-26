@@ -57,14 +57,20 @@ export async function scheduleIllnessCheckAlert({ episodeId, familyId, lastActiv
   const data = { kind: 'illness_check', episodeId, familyId };
   const immediate = triggerAt.getTime() <= Date.now();
 
-  const notificationId = await Notifications.scheduleNotificationAsync({
-    content: { title: 'Nocttua', body, data, categoryIdentifier: CATEGORY },
-    trigger: immediate ? null : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
-  });
-
-  await saveEntry({ alertKey, notificationId, episodeId });
-  await logTelemetry('illness_check_alert_scheduled', { episodeId, ok: true, immediate, triggerAt: triggerAt.toISOString() });
-  return { ok: true, immediate };
+  // Ver el mismo try/catch en openNapAlerts.js: antes, un fallo acá no
+  // dejaba rastro — el aviso no se agendaba y nadie se enteraba nunca.
+  try {
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content: { title: 'Nocttua', body, data, categoryIdentifier: CATEGORY },
+      trigger: immediate ? null : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
+    });
+    await saveEntry({ alertKey, notificationId, episodeId });
+    await logTelemetry('illness_check_alert_scheduled', { episodeId, ok: true, immediate, triggerAt: triggerAt.toISOString() });
+    return { ok: true, immediate };
+  } catch (err) {
+    await logTelemetry('illness_check_alert_scheduled', { episodeId, ok: false, reason: 'schedule_failed', error: String(err?.message ?? err) });
+    return { ok: false, reason: 'schedule_failed' };
+  }
 }
 
 export async function cancelIllnessCheckAlert() {

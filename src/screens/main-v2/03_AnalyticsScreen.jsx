@@ -12,7 +12,7 @@ import { getDayRecords, buildDayRecords, withEmbeddedFeeds } from '../../data/da
 import {
   twinRows, twinGap, twinVerdict, correlations, heatRow, dayDetail, restRows, restFlag, howBar,
   wakeCurve, scatter, baseWakes, avgWindow, avgLatency, avgNapLen, avgNightFeeds, avgNightFeedMl, perBaby,
-  daysWithDataWindow, DAYS_WITH_DATA_MIN,
+  daysWithDataWindow, DAYS_WITH_DATA_MIN, oneThingToday,
 } from '../../lib/derive';
 import { dur, one, avg } from '../../lib/time';
 import { profileForBirthDate } from '../../data/profiles';
@@ -153,8 +153,17 @@ export function AnalyticsScreen({ refreshKey }) {
   const verdict = babies.length > 1 ? twinVerdict(records, babies.map((b) => b.name)) : null;
   const curve = wakeCurve(records, baby, dayKeys);
   const sc = scatter(profile, records);
-  const rest = restRows(profile, records, babies.length);
+  // Filtrado a la bebé seleccionada arriba — antes mostraba siempre a las
+  // dos acá, y como la ventana de días con dato depende de cuál está
+  // seleccionada, ese "las dos" cambiaba de número según la pestaña activa
+  // aunque la tarjeta decía que mostraba a ambas por igual.
+  const rest = restRows(profile, records, [baby]);
   const corr = correlations(scopedRecords).slice(0, 4);
+  // Mismo motor que ya usa "Mañana" (oneThingToday) — ahí vive la sugerencia
+  // accionable real (ej. "Adelanta la primera siesta a las X"), que acá
+  // faltaba: la tarjeta de abajo mostraba los números pero nunca el qué
+  // hacer con ellos.
+  const suggestion = oneThingToday(scopedRecords, profile);
   const hb = howBar(scopedRecords);
   const heatMapDayKeys = dayKeys.slice(-14);
 
@@ -297,6 +306,14 @@ export function AnalyticsScreen({ refreshKey }) {
               <View><Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 22, color: '#F0A868' }}>{profile.windowTarget}</Text><Text style={{ fontSize: 12, color: '#8E87B5' }}>objetivo edad</Text></View>
               <View><Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 22, color: '#FBF7F0' }}>{one(base)}</Text><Text style={{ fontSize: 12, color: '#8E87B5' }}>despertares/noche</Text></View>
             </View>
+            {suggestion && suggestion.kind !== 'none' ? (
+              <View style={{ marginTop: 11, borderRadius: 13, backgroundColor: 'rgba(240,168,104,.12)', borderWidth: 1, borderColor: 'rgba(240,168,104,.3)', paddingHorizontal: 13, paddingVertical: 11, gap: 3 }}>
+                <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 9.5, letterSpacing: 1.2, textTransform: 'uppercase', color: '#F0A868' }}>
+                  {suggestion.kind === 'achievement' ? 'Viene bien' : 'Qué probar'}
+                </Text>
+                <Text style={{ fontSize: 14, lineHeight: 14 * 1.4, color: '#FBF7F0' }}>{suggestion.text}</Text>
+              </View>
+            ) : null}
           </NightCard>
         </>
       )}

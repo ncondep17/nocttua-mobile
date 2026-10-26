@@ -10,7 +10,6 @@ import { profileForBirthDate, ACCENT } from '../../data/profiles';
 import { profileWithPlan } from '../../lib/assessment';
 import { dur, fmt, one } from '../../lib/time';
 import { agree } from '../../lib/grammar';
-import { navigate } from '../../navigation/navigationRef';
 
 /** Marca cada despertar de `night.wakings` en su posición real dentro de `[started_at, ended_at]` — reemplaza la barra plana de antes ahora que el schema guarda hora exacta por despertar. */
 function NightLane({ night, color }) {
@@ -39,7 +38,7 @@ function NightLane({ night, color }) {
  * de esa migración no tienen wakings poblado — sus carriles se ven sin
  * marcas aunque wake_count sea > 0, porque no hay con qué posicionarlas.
  */
-export function MorningScreen({ onClose }) {
+export function MorningScreen({ onClose, onOpenSleepPlan }) {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [babies, setBabies] = useState([]);
@@ -184,7 +183,7 @@ export function MorningScreen({ onClose }) {
             <Text style={{ fontFamily: theme.fontFamily.displayApp, fontSize: 22, lineHeight: 22 * 1.2, color: '#FBF7F0' }}>{oneThing.text}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable
-                onPress={() => { onClose && onClose(); navigate('hoy'); }}
+                onPress={() => onOpenSleepPlan && onOpenSleepPlan()}
                 style={{ flex: 1, minHeight: 48, borderRadius: 13, backgroundColor: '#6B5DD3', alignItems: 'center', justifyContent: 'center' }}
               >
                 <Text style={{ fontSize: 14, fontWeight: '600', color: '#FBF7F0' }}>Ajustar el plan de hoy</Text>

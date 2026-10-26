@@ -46,7 +46,7 @@ const LATENCY_OPTIONS = [
  * noche de 8-11h esto ya generó la queja correcta la primera vez que se
  * probó con steppers.
  */
-export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, initialBaby = 0, editing = null, presetStartAt = null, familyId, onClose, onSave, onSaveBoth, onDelete }) {
+export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, initialBaby = 0, editing = null, presetStartAt = null, familyId, onClose, onSave, onDelete }) {
   const [b, setB] = useState(initialBaby);
 
   // `editing` viene del bebé con el que se ABRIÓ la hoja — si adentro se
@@ -173,11 +173,10 @@ export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, 
     if (!open) return;
     setEditStart(false);
     setStillSleeping(false);
-    // Nueva entrada con mellizas: arranca en "Las dos", igual que Modo
-    // noche — editar un registro puntual siempre necesita una bebé
-    // concreta, así que ahí se respeta initialBaby.
-    const startB = !editing && babies.length > 1 ? 'both' : initialBaby;
-    setB(startB);
+    // "Las dos" se sacó (guardaba duplicado y dejaba siestas huérfanas con
+    // mellizas, ver FamilyShell/handleSaveSleepBoth) — cada sueño se guarda
+    // siempre por una bebé concreta, incluso al arrancar una entrada nueva.
+    setB(initialBaby);
     const relevant = editing && (editing.baby_id === babies[initialBaby]?.id || editing.baby_id == null) ? editing : null;
     resetFieldsFor(relevant);
     setQuickSleepType(session === 'night' ? 'night' : 'nap');
@@ -331,14 +330,14 @@ export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, 
     ]);
   };
 
-  // Quiénes están seleccionados ahora mismo, para conjugar por número
-  // (tardó/tardaron, se durmió/se durmieron) — 'both' cuenta como plural
-  // aunque solo haya dos bebés en la família entera.
-  const selectedBabies = b === 'both' ? babies : [babies[b]].filter(Boolean);
+  // Quién está seleccionada ahora mismo, para conjugar por número (tardó/
+  // tardaron, se durmió/se durmieron) — ya no existe "Las dos" (ver abajo,
+  // cada bebé se guarda siempre por separado), así que esto es siempre un
+  // único elemento, pero plural()/agree() ya esperan un array.
+  const selectedBabies = [babies[b]].filter(Boolean);
 
   const handleSaveMain = () => {
-    if (b === 'both') onSaveBoth && onSaveBoth(payload(null));
-    else onSave && onSave(payload(babies[b]?.id));
+    onSave && onSave(payload(babies[b]?.id));
   };
 
   // "Cronometrar el sueño": guarda ya mismo como sesión abierta con asleep =
@@ -349,8 +348,7 @@ export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, 
   const handleCronometrar = () => {
     const now = new Date();
     const overrides = { startedAt: now.toISOString(), fellAsleepAt: now.toISOString() };
-    if (b === 'both') onSaveBoth && onSaveBoth({ ...payload(null), ...overrides });
-    else onSave && onSave({ ...payload(babies[b]?.id), ...overrides });
+    onSave && onSave({ ...payload(babies[b]?.id), ...overrides });
   };
 
   const showFullFields = !completeOnly && (!isQuickCapture || showDetails);
@@ -368,21 +366,20 @@ export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, 
             {relevantEditing ? 'Editar sueño' : completeOnly ? 'Completar el despertar' : 'Registrar sueño'}
           </Text>
           <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', color: '#8A8299' }}>
-            {(b === 'both' ? 'Las dos' : (babies[b]?.name ?? '')).toUpperCase() + ' · ' + (daysBetween(day, startOfDay(new Date())) === 0 ? 'HOY' : 'OTRO DÍA') + ' ' + new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2, '0')}
+            {(babies[b]?.name ?? '').toUpperCase() + ' · ' + (daysBetween(day, startOfDay(new Date())) === 0 ? 'HOY' : 'OTRO DÍA') + ' ' + new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2, '0')}
           </Text>
         </View>
         <Text onPress={onClose} style={{ fontSize: 13, color: '#6B5DD3' }}>Cerrar</Text>
       </View>
 
-      {/* "Las dos" se saca mientras se completa un despertar de una siesta
-          todavía abierta (`editing` apunta a esa siesta puntual, de UNA
-          bebé) — cambiar a "Las dos" ahí perdía de vista ese registro
-          abierto y la hoja caía en captura rápida de una siesta NUEVA para
-          las dos, sin cerrar ninguna de las dos que ya estaban abiertas:
-          quedaban 4 registros de siesta sueltos en vez de 2 cerrados. */}
-      {babies.length > 1 && !(editing && editing.ended_at == null) ? (
+      {/* "Las dos" existió y se sacó: con mellizas, guardar "para las dos"
+          mientras se completaba una siesta abierta dejaba 4 registros
+          sueltos en vez de 2 cerrados (ver FamilyShell/handleSaveSleepBoth).
+          En vez de perseguir ese camino hoja por hoja, se saca la opción
+          entera — cada sueño se registra siempre por una bebé concreta. */}
+      {babies.length > 1 ? (
         <SegTabs
-          items={[...babies.map((baby, i) => ({ id: i, label: baby.name })), { id: 'both', label: 'Las dos' }]}
+          items={babies.map((baby, i) => ({ id: i, label: baby.name }))}
           active={b}
           onSelect={setB}
         />
@@ -453,7 +450,7 @@ export function SleepLogSheet({ open, session, label, wakeOnly = false, babies, 
           <Text style={{ fontFamily: theme.fontFamily.mono, fontSize: 12, color: '#8A8299' }}>
             {(quickSleepType === 'nap' ? 'Siesta' : 'Sueño de la noche') + ' · se durmió ' + fmt(minutesOfDay(asleep)) + ' · '
               + plural(selectedBabies, 'tardó', 'tardaron') + ' ' + LATENCY_OPTIONS.find((o) => o.min === latencyChipMin).summary + ' · '
-              + (b === 'both' ? 'Las dos' : (babies[b]?.name ?? ''))}
+              + (babies[b]?.name ?? '')}
           </Text>
 
           <Pressable

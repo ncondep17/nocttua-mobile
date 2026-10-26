@@ -43,14 +43,21 @@ async function scheduleOpenNapAlert({ babyId, babyName, referenceAtMs }) {
 
   const body = `La siesta de ${babyName} sigue abierta hace más de 2 horas y media — ¿ya se despertó?`;
   const immediate = triggerAt.getTime() <= Date.now();
-  const notificationId = await Notifications.scheduleNotificationAsync({
-    content: { title: 'Nocttua', body, data: { kind: 'open_nap', babyId } },
-    trigger: immediate ? null : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
-  });
-
-  map[babyId] = { alertKey, notificationId };
-  await saveMap(map);
-  await logTelemetry('open_nap_alert_scheduled', { babyId, ok: true, immediate, triggerAt: triggerAt.toISOString() });
+  // Antes, si scheduleNotificationAsync fallaba acá (límite de iOS de
+  // notificaciones pendientes, error del sistema, lo que sea), no quedaba
+  // ningún rastro — el aviso simplemente no se agendaba y nadie se enteraba
+  // nunca, ni siquiera en telemetría. Con esto, al menos queda registrado.
+  try {
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content: { title: 'Nocttua', body, data: { kind: 'open_nap', babyId } },
+      trigger: immediate ? null : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
+    });
+    map[babyId] = { alertKey, notificationId };
+    await saveMap(map);
+    await logTelemetry('open_nap_alert_scheduled', { babyId, ok: true, immediate, triggerAt: triggerAt.toISOString() });
+  } catch (err) {
+    await logTelemetry('open_nap_alert_scheduled', { babyId, ok: false, reason: 'schedule_failed', error: String(err?.message ?? err) });
+  }
 }
 
 async function cancelOpenNapAlert(babyId) {

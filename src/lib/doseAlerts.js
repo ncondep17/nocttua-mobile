@@ -77,24 +77,32 @@ export async function scheduleDoseAlert({ familyId, prescriptionId, babyId, baby
   const data = { alertKey, prescriptionId, babyId, babyName, medName, doseMl, familyId, doseAt: doseAt.toISOString(), remindMinutesBefore, kind: 'dose' };
   const body = `${medName} para ${babyName}: ${doseMl}, ${remindMinutesBefore <= 0 ? 'le toca ahora' : 'le toca en ' + remindMinutesBefore + ' min'}.`;
 
-  const notificationId = await Notifications.scheduleNotificationAsync({
-    content: { title: 'Nocttua', body, data, categoryIdentifier: CATEGORY },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderAt },
-  });
-
-  const repeatAt = new Date(reminderAt.getTime() + REPEAT_AFTER_MIN * 60000);
-  let repeatId = null;
-  if (repeatAt.getTime() > Date.now()) {
-    repeatId = await Notifications.scheduleNotificationAsync({
-      content: { title: 'Nocttua', body: 'Todavía pendiente — ' + body, data, categoryIdentifier: CATEGORY },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: repeatAt },
+  // Ver el mismo try/catch en lib/openNapAlerts.js: antes, un fallo de
+  // scheduleNotificationAsync acá no dejaba rastro — el aviso no se agendaba
+  // y nadie se enteraba nunca, ni siquiera en telemetría.
+  try {
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content: { title: 'Nocttua', body, data, categoryIdentifier: CATEGORY },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderAt },
     });
-  }
 
-  map[mapKey] = { alertKey, notificationId, repeatId };
-  await saveMap(map);
-  await logTelemetry('dose_alert_scheduled', { prescriptionId, babyId, ok: true, alertKey, triggerAt: reminderAt.toISOString() });
-  return { ok: true };
+    const repeatAt = new Date(reminderAt.getTime() + REPEAT_AFTER_MIN * 60000);
+    let repeatId = null;
+    if (repeatAt.getTime() > Date.now()) {
+      repeatId = await Notifications.scheduleNotificationAsync({
+        content: { title: 'Nocttua', body: 'Todavía pendiente — ' + body, data, categoryIdentifier: CATEGORY },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: repeatAt },
+      });
+    }
+
+    map[mapKey] = { alertKey, notificationId, repeatId };
+    await saveMap(map);
+    await logTelemetry('dose_alert_scheduled', { prescriptionId, babyId, ok: true, alertKey, triggerAt: reminderAt.toISOString() });
+    return { ok: true };
+  } catch (err) {
+    await logTelemetry('dose_alert_scheduled', { prescriptionId, babyId, ok: false, reason: 'schedule_failed', error: String(err?.message ?? err) });
+    return { ok: false, reason: 'schedule_failed' };
+  }
 }
 
 export async function cancelDoseAlert(prescriptionId, babyId) {

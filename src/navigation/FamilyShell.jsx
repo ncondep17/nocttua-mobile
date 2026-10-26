@@ -18,7 +18,7 @@ import { MorningScreen } from '../screens/main-v2/MorningScreen';
 import { WinsScreen } from '../screens/main-v2/WinsScreen';
 import { TreatmentScreen } from '../screens/main-v2/TreatmentScreen';
 import { QuickActionsSheet } from '../screens/main-v2/overlays/QuickActionsSheet';
-import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, closeNight, getLatestSleepEventAt, getOpenSleepEvent, payloadFromRow } from '../data/family';
+import { getMyFamilyId, getBabies, insertEvent, updateEvent, deleteEvent, closeNight, getLatestSleepEventAt } from '../data/family';
 import { getActiveEpisode, getPrescriptions, getDosesSince, startEpisode, endEpisode, upsertPrescription, deactivatePrescription, setPrescriptionInUse, logDose } from '../data/meds';
 import { addShiftNote } from '../data/shiftNotes';
 import { scheduleTodayDoseAlerts } from '../lib/scheduleTodayDoses';
@@ -40,6 +40,11 @@ export function FamilyShell() {
   const [logCtx, setLogCtx] = useState({ label: '', babyIndex: 0, session: 'nap', isWake: false });
   const [event, setEvent] = useState(null); // evento seleccionado (detalle o edición)
   const [full, setFull] = useState(null); // 'settings'
+  // A dónde volver al cerrar SleepPlanScreen — se abre tanto desde Ajustes
+  // como desde "Cómo fue la noche" (botón "Ajustar el plan de hoy", antes
+  // no hacía nada salvo volver a Hoy), y cada camino espera volver a donde
+  // estaba, no siempre a Ajustes.
+  const [sleepPlanReturnTo, setSleepPlanReturnTo] = useState(null);
   const [toast, setToast] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -132,38 +137,6 @@ export function FamilyShell() {
       closeSheet();
       setRefreshKey((k) => k + 1);
       say(split || sameRecord ? 'Sueño actualizado' : 'Sueño anotado');
-      scheduleInactivityAlert(Date.now()).catch(() => {});
-      refreshOpenNightAlerts(familyId, babies).catch(() => {});
-      refreshOpenNapAlerts(familyId, babies).catch(() => {});
-    } catch (err) {
-      say(err.message ?? String(err));
-    }
-  };
-
-  // "Aplicar a ambas" en una entrada NUEVA (nunca en una edición — las hojas
-  // ocultan ese botón mientras se edita): una fila independiente por bebé
-  // desde el principio, nunca una fila compartida con baby_id null. Mismo
-  // patrón que ya usa handleSaveDoseBoth más abajo para medicinas.
-  // Respaldo además del fix en SleepLogSheet (que ya saca "Las dos" mientras
-  // se completa una siesta abierta): si de todos modos llega acá una bebé
-  // que YA tiene un sueño abierto de esta sesión, nunca se inserta un
-  // segundo registro encima — eso es lo que dejaba siestas duplicadas y
-  // huérfanas. Mejor avisar y que se complete aparte que duplicar o pisar
-  // con datos adivinados.
-  const handleSaveSleepBoth = async (payloadBase) => {
-    try {
-      const results = await Promise.all(babies.map(async (baby) => {
-        const open = await getOpenSleepEvent(familyId, baby.id, payloadBase.session);
-        if (open) return { skipped: true, name: baby.name };
-        await insertEvent(familyId, { ...payloadBase, babyId: baby.id });
-        return { skipped: false };
-      }));
-      closeSheet();
-      setRefreshKey((k) => k + 1);
-      const skipped = results.filter((r) => r.skipped).map((r) => r.name);
-      say(skipped.length
-        ? 'Guardado — ' + skipped.join(' y ') + ' ya tenía una siesta abierta, complétala aparte.'
-        : 'Sueño anotado para las dos');
       scheduleInactivityAlert(Date.now()).catch(() => {});
       refreshOpenNightAlerts(familyId, babies).catch(() => {});
       refreshOpenNapAlerts(familyId, babies).catch(() => {});
@@ -380,7 +353,6 @@ export function FamilyShell() {
         familyId={familyId}
         onClose={closeSheet}
         onSave={handleSaveSleep}
-        onSaveBoth={handleSaveSleepBoth}
         onDelete={event?.type === 'sleep' ? handleDeleteEvent : undefined}
       />
       <FeedLogSheet
@@ -467,13 +439,13 @@ export function FamilyShell() {
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'white' }}>
           <SettingsScreen
             onClose={() => { setFull(null); loadBabies(familyId); setRefreshKey((k) => k + 1); }}
-            onOpenSleepPlan={() => setFull('sleepPlan')}
+            onOpenSleepPlan={() => { setSleepPlanReturnTo('settings'); setFull('sleepPlan'); }}
           />
         </View>
       ) : null}
       {full === 'sleepPlan' ? (
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-          <SleepPlanScreen onClose={() => { setFull('settings'); setRefreshKey((k) => k + 1); }} />
+          <SleepPlanScreen onClose={() => { setFull(sleepPlanReturnTo); setRefreshKey((k) => k + 1); }} />
         </View>
       ) : null}
       {full === 'nightMode' ? (
@@ -487,7 +459,10 @@ export function FamilyShell() {
       ) : null}
       {full === 'morning' ? (
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-          <MorningScreen onClose={() => setFull(null)} />
+          <MorningScreen
+            onClose={() => setFull(null)}
+            onOpenSleepPlan={() => { setSleepPlanReturnTo(null); setFull('sleepPlan'); }}
+          />
         </View>
       ) : null}
       {full === 'wins' ? (

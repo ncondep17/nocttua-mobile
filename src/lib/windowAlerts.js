@@ -64,18 +64,25 @@ export async function scheduleWindowAlert({ babyId, babyName, windowStartLocalIS
     return { ok: false, reason: 'window_in_past' };
   }
 
-  const notificationId = await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'Nocttua',
-      body: `${babyName}: ventana ${new Date(windowStartLocalISO).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}.`,
-      data: { alertKey, babyId, kind: 'window' },
-    },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
-  });
-
-  map[babyId] = { alertKey, notificationId };
-  await saveMap(map);
-  await logTelemetry('alert_scheduled', { babyId, ok: true, alertKey, triggerAt: triggerAt.toISOString() });
+  // Ver el mismo try/catch en lib/openNapAlerts.js: antes, un fallo de
+  // scheduleNotificationAsync acá no dejaba rastro — el aviso simplemente no
+  // se agendaba y nadie se enteraba nunca, ni siquiera en telemetría.
+  try {
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Nocttua',
+        body: `${babyName}: ventana ${new Date(windowStartLocalISO).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}.`,
+        data: { alertKey, babyId, kind: 'window' },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
+    });
+    map[babyId] = { alertKey, notificationId };
+    await saveMap(map);
+    await logTelemetry('alert_scheduled', { babyId, ok: true, alertKey, triggerAt: triggerAt.toISOString() });
+  } catch (err) {
+    await logTelemetry('alert_scheduled', { babyId, ok: false, reason: 'schedule_failed', error: String(err?.message ?? err) });
+    return { ok: false, reason: 'schedule_failed' };
+  }
   return { ok: true };
 }
 

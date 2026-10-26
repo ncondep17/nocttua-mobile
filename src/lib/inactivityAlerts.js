@@ -48,14 +48,20 @@ export async function scheduleInactivityAlert(lastSleepAtMs) {
   // pasado — una sola vez, porque alertKey no cambia hasta el próximo sueño.
   const content = { title: 'Nocttua', body: BODY, data: { kind: 'inactivity' } };
   const immediate = triggerAt.getTime() <= Date.now();
-  const notificationId = await Notifications.scheduleNotificationAsync({
-    content,
-    trigger: immediate ? null : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
-  });
-
-  await saveEntry({ alertKey, notificationId });
-  await logTelemetry('inactivity_alert_scheduled', { ok: true, immediate, triggerAt: triggerAt.toISOString() });
-  return { ok: true, immediate };
+  // Ver el mismo try/catch en openNapAlerts.js: antes, un fallo acá no
+  // dejaba rastro — el aviso no se agendaba y nadie se enteraba nunca.
+  try {
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content,
+      trigger: immediate ? null : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerAt },
+    });
+    await saveEntry({ alertKey, notificationId });
+    await logTelemetry('inactivity_alert_scheduled', { ok: true, immediate, triggerAt: triggerAt.toISOString() });
+    return { ok: true, immediate };
+  } catch (err) {
+    await logTelemetry('inactivity_alert_scheduled', { ok: false, reason: 'schedule_failed', error: String(err?.message ?? err) });
+    return { ok: false, reason: 'schedule_failed' };
+  }
 }
 
 export async function cancelInactivityAlert() {
